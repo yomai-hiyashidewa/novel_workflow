@@ -4,9 +4,6 @@ import google.generativeai as genai
 from google.generativeai import types
 from typing import Optional
 
-# 使用するモデル
-
-
 class AiAdapter:
     
     _model: Optional[genai.GenerativeModel] = None
