@@ -30,15 +30,10 @@ class AiAdapter:
     
 
     def run(self, prompt : str) -> str | None:
-        if self._model is None:
-            return None
-            
-        print(f"AiAdapter: Editing transcription data with Gemini model ({MODEL_NAME})...")
-
         response = self._model.generate_content(
             prompt
         )
-        print("AiAdapter: Editing completed by Gemini.")
+        print("AiAdapter: Editing completed")
         return response.text
 
     

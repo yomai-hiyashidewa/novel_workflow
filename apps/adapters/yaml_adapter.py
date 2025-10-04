@@ -6,7 +6,6 @@ class YamlAdapter:
 
     @staticmethod
     def _get_abs_path(yaml_path: str) -> str:
-        # 呼び出し元に依存せず絶対パスを返す
         base_dir = os.path.dirname(os.path.dirname(__file__))  # apps/ より上のプロジェクトルート
         abs_path = os.path.join(base_dir, yaml_path)
         return os.path.abspath(abs_path)

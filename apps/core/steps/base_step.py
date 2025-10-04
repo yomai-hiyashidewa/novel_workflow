@@ -6,7 +6,7 @@ from apps.adapters.yaml_adapter import YamlAdapter
 from apps.utils.prompt_reader import PromptReader
 from apps.domains.workflow_step import WorkflowStep
 
-class BaseTeamMate(ABC):
+class BaseStep(ABC):
     def __init__(self ,step: WorkflowStep):
         self.step = step
         self.ai_adapter = AiAdapter()
@@ -34,7 +34,7 @@ class BaseTeamMate(ABC):
             return
         self.ai_adapter.initialize(model_name=model_name, api_key=api_key)
 
-    def read_prompt(self, prompt_path: str):       
+    def read_prompt(self):       
         self.prompt = PromptReader.read(self.step)
         if self.prompt is None:
             print(f"INFO: Prompt for step '{self.step.name}' could not be loaded.")
