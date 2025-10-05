@@ -33,6 +33,9 @@ class BaseStep(ABC):
             print("INFO: Model name or API key is not configured properly.")
             return
         self.communicator.initialize(model_name=model_name, api_key=api_key)
+        target_name = self.get_config_value("target_dir")
+        target_dir = os.path.join(target_name, self.step.name.lower()) if target_name else None
+        os.makedirs(target_dir, exist_ok=True) 
 
     def read_prompt(self):       
         self.prompt = PromptReader.read(self.step)

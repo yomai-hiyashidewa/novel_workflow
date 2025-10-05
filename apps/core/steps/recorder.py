@@ -1,5 +1,7 @@
+
 import os
 
+from apps.adapters.yaml_adapter import YamlAdapter
 from apps.core.steps.base_step import BaseStep
 from apps.domains.workflow_step import WorkflowStep
 
@@ -37,3 +39,11 @@ class Recorder(BaseStep):
             return
         self.write_file(self.output_note_path, result)
         print("Recorder: Note has been written to", self.output_note_path)
+
+if __name__ == "__main__":
+    target_dir = YamlAdapter.get("target_dir", ".")
+    input_memo_path = os.path.join(target_dir, "memo.md")
+    output_note_path = os.path.join(target_dir, "note.md")
+    recorder = Recorder(input_memo_path=input_memo_path, output_note_path=output_note_path)
+    recorder.initialize()
+    recorder.run()

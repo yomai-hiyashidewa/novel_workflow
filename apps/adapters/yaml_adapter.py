@@ -25,6 +25,12 @@ class YamlAdapter:
         if cls._data is None:
             cls.load(yaml_path)
         return cls._data.get(key, default) if cls._data else default
+    
+    @classmethod
+    def get_step(cls, key: str, default=None, yaml_path: str = "config/config.yaml"):
+        if cls._data is None:
+            cls.load(yaml_path)
+        return cls._data.get("steps", {}).get(key, default) if cls._data else default
 
     @classmethod
     def save(cls, data: dict, yaml_path: str = "config/config.yaml"):

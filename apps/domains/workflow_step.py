@@ -8,3 +8,4 @@ class WorkflowStep(Enum):
     PLOTTER = "plotter"
     WRITER = "writer"
     ILLUSTRATOR = "illustrator"
+    ALL = "all"
