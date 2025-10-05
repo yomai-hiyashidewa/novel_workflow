@@ -13,10 +13,10 @@ class Tester(BaseStep):
         if self.is_enable is False:
             return
         
-        result = self.ai_adapter.run(
+        result = self.communicator.run(
             prompt=self.prompt
         )   
         if result is None:
             return
-        print("Tester: AI Adapter returned result:")
+        print("Tester: Gemini Communicator returned result:")
         print(result)   

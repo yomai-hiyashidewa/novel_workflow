@@ -30,7 +30,7 @@ class Recorder(BaseStep):
         
         prompt_with_memo = f"{self.prompt}\n{memo}"
 
-        result = self.ai_adapter.run(
+        result = self.communicator.run(
             prompt=prompt_with_memo
         )
         if result is None:

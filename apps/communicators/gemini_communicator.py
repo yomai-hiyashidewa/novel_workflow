@@ -4,7 +4,7 @@ import google.generativeai as genai
 from google.generativeai import types
 from typing import Optional
 
-class AiAdapter:
+class GeminiCommunicator:
     
     _model: Optional[genai.GenerativeModel] = None
 

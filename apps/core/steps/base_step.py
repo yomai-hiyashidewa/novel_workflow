@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 
-from adapters.ai_adapter import AiAdapter
+from communicators.gemini_communicator import GeminiCommunicator
 from apps.adapters.yaml_adapter import YamlAdapter
 from apps.utils.prompt_reader import PromptReader
 from apps.domains.workflow_step import WorkflowStep
@@ -9,12 +9,12 @@ from apps.domains.workflow_step import WorkflowStep
 class BaseStep(ABC):
     def __init__(self ,step: WorkflowStep):
         self.step = step
-        self.ai_adapter = AiAdapter()
+        self.communicator = GeminiCommunicator()
         self.prompt : str | None = None
 
     @property
     def is_enable(self) -> bool:
-        return self.ai_adapter.is_enable and self.prompt is not None
+        return self.communicator.is_enable and self.prompt is not None
     
     def _get_api_key(self) -> str | None:
         api_key_path = self.get_config_value("api_key_path", None)
@@ -32,7 +32,7 @@ class BaseStep(ABC):
         if model_name is None or api_key is None:
             print("INFO: Model name or API key is not configured properly.")
             return
-        self.ai_adapter.initialize(model_name=model_name, api_key=api_key)
+        self.communicator.initialize(model_name=model_name, api_key=api_key)
 
     def read_prompt(self):       
         self.prompt = PromptReader.read(self.step)
