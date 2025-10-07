@@ -2,13 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: main.py (debugpy)",
+            "name": "request team",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/apps/main.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/apps",
             "justMyCode": true,
+            "args": [
+                "--step",
+                "tester"
+            ]
         }
     ]
 }
