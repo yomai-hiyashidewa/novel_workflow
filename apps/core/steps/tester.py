@@ -5,18 +5,13 @@ class Tester(BaseStep):
     def __init__(self):
         super().__init__(WorkflowStep.TESTER)
 
-    def initialize(self):
-        super().initialize()
-        self.read_prompt()
-
-    def run(self):
-        if self.is_enable is False:
-            return
+    def _read_inputs(self) -> dict[str, str] | None:
+        return {"test": "test"}
         
-        result = self.communicator.run(
-            prompt=self.prompt
-        )   
-        if result is None:
-            return
-        print("Tester: Gemini Communicator returned result:")
-        print(result)   
+    def _format_prompt(self, inputs: dict[str, str]) -> str:
+        return f"{self.prompt}\n{inputs['test']}"
+
+    def _get_output_path(self) -> str:
+        return "test.md"    
+
+

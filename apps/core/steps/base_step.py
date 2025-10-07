@@ -35,9 +35,10 @@ class BaseStep(ABC):
         self.communicator.initialize(model_name=model_name, api_key=api_key)
         target_name = self.get_config_value("target_dir")
         target_dir = os.path.join(target_name, self.step.name.lower()) if target_name else None
-        os.makedirs(target_dir, exist_ok=True) 
+        os.makedirs(target_dir, exist_ok=True)
+        self._read_prompt()
 
-    def read_prompt(self):       
+    def _read_prompt(self):       
         self.prompt = PromptReader.read(self.step)
         if self.prompt is None:
             print(f"INFO: Prompt for step '{self.step.name}' could not be loaded.")
@@ -53,3 +54,44 @@ class BaseStep(ABC):
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"INFO: File '{file_path}' was written.")
+
+
+    @abstractmethod
+    def _read_inputs(self) -> dict[str, str] | None:
+        pass
+    
+    @abstractmethod
+    def _format_prompt(self, inputs: dict[str, str]) -> str:
+        pass
+
+    @abstractmethod
+    def _get_output_path(self) -> str:
+        pass
+
+    def run(self):
+        if not self.is_enable:
+            print(f"INFO: Step '{self.step.name}' is disabled or not initialized.")
+            return
+        
+        # 1. 入力の読み込み
+        inputs = self._read_inputs()
+        if inputs is None:
+            # 入力ファイルが見つからないなどの情報は _read_inputs 内で出力済み
+            return
+        
+        # 2. プロンプトの組み立て
+        full_prompt = self._format_prompt(inputs)
+        
+        # 3. コミュニケーターの実行
+        result = self.communicator.run(
+            prompt=full_prompt
+        )
+        
+        if result is None:
+            print(f"WARNING: Communicator returned no result for step '{self.step.name}'.")
+            return
+        
+        # 4. 結果の書き込み
+        output_path = self._get_output_path()
+        self.write_file(output_path, result)
+        print(f"INFO: {self.step.name.capitalize()}: Result has been written to", output_path)

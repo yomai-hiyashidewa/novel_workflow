@@ -11,7 +11,7 @@
             "justMyCode": true,
             "args": [
                 "--step",
-                "tester"
+                "recorder"
             ]
         }
     ]

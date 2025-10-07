@@ -8,9 +8,8 @@ steps:
     input: "memo.md"
     output: "note.md"
   researcher:
-    input:
-      - "note.md"
-      - "research.md"
+    input_note: "note.md"
+    input_research: "research.md"
     output: "setting.md"
   planner:
     input: "setting.md"

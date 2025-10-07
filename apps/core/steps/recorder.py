@@ -11,39 +11,21 @@ class Recorder(BaseStep):
         self.input_memo_path = input_memo_path
         self.output_note_path = output_note_path
 
-    def _read_memo(self) -> str | None:
-        if not os.path.exists(self.input_memo_path):
-            print(f"info:memo '{self.input_memo_path}' does not exist.")
+    def _read_file(self, path: str, file_name: str) -> str | None:
+        if not os.path.exists(path):
+            print(f"info:{file_name} '{path}' does not exist.")
             return None
-        with open(self.input_memo_path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8") as f:
             return f.read()
 
-    def initialize(self):
-        super().initialize()
-        self.read_prompt()
-
-    def run(self):
-        if not self.is_enable:
-            return
+    def _read_inputs(self) -> dict[str, str] | None:
+        memo = self._read_file(self.input_memo_path, "memo")
+        return {"memo": memo} if memo is not None else None
         
-        memo = self._read_memo()
-        if memo is None:
-            return
-        
-        prompt_with_memo = f"{self.prompt}\n{memo}"
+    def _format_prompt(self, inputs: dict[str, str]) -> str:
+        # Recorder のプロンプト形式に合わせて組み立て
+        return f"{self.prompt}\n{inputs['memo']}"
 
-        result = self.communicator.run(
-            prompt=prompt_with_memo
-        )
-        if result is None:
-            return
-        self.write_file(self.output_note_path, result)
-        print("Recorder: Note has been written to", self.output_note_path)
+    def _get_output_path(self) -> str:
+        return self.output_note_path
 
-if __name__ == "__main__":
-    target_dir = YamlAdapter.get("target_dir", ".")
-    input_memo_path = os.path.join(target_dir, "memo.md")
-    output_note_path = os.path.join(target_dir, "note.md")
-    recorder = Recorder(input_memo_path=input_memo_path, output_note_path=output_note_path)
-    recorder.initialize()
-    recorder.run()

@@ -24,7 +24,14 @@ class Director:
         recorder.run()
 
     def _run_researcher(self):
-        researcher = Researcher()
+        researcher_data = YamlAdapter.get_step(WorkflowStep.RESEARCHER.value, {})
+        input_note = researcher_data.get("input_note")
+        input_research = researcher_data.get("input_research")
+        output = researcher_data.get("output")
+        input_note_path = os.path.join(self._target_name, WorkflowStep.RECORDER.value, input_note)
+        input_research_path = os.path.join(self._target_name, input_research)
+        output_path = os.path.join(self._target_name, WorkflowStep.RESEARCHER.value, output)
+        researcher = Researcher(input_note_path=input_note_path, input_research_path=input_research_path, output_setting_path=output_path)
         researcher.initialize()
         researcher.run()
 
@@ -34,12 +41,15 @@ class Director:
         tester.run()
 
     def run(self, step: WorkflowStep):
-        if step == WorkflowStep.RECORDER:
-            self._run_recorder()
-        elif step == WorkflowStep.RESEARCHER:
-            self._run_researcher()
-        elif step == WorkflowStep.TESTER:
-            self._run_tester()
+        try:
+            if step == WorkflowStep.RECORDER:
+                self._run_recorder()
+            elif step == WorkflowStep.RESEARCHER:
+                self._run_researcher()
+            elif step == WorkflowStep.TESTER:
+                self._run_tester()
+        except Exception as e:
+            print(f"Error occurred while running {step.value}: {e}")
 
     
      
