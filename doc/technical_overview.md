@@ -43,9 +43,9 @@ classDiagram
         +communicator: GeminiCommunicator
         +initialize()
         +run()
-        #_read_prompt()
-        #_read_file(path)
-        #write_file(path, content)
+        -_read_prompt()
+        -_read_file(path)
+        -write_file(path, content)
     }
 
     BaseStep <|-- Recorder
@@ -57,6 +57,32 @@ classDiagram
     BaseStep <|-- FinalWriter
     BaseStep <|-- Illustrator
 ```
+
+### 基本動作フロー
+
+各ステップの基本的な実行ロジックは`BaseStep`の`run`メソッドに定義されています。単一の出力を生成するステップ（例: `Recorder`, `FinalWriter`）は、以下のフローで動作します。
+
+```mermaid
+graph TD
+    A[Start run] --> B{is_enable?};
+    B -- No --> Z[End];
+    B -- Yes --> C[1. _read_inputs];
+    C -- No inputs --> Z;
+    C -- Inputs found --> D[2. _format_prompt];
+    D --> E[3. communicator.run<br>Gemini API 実行];
+    E -- No result --> Z;
+    E -- Result received --> F[4. write_file];
+    F --> Z;
+```
+
+| メソッド | 役割 |
+|:---|:---|
+| `_read_inputs()` | (抽象メソッド) 具象クラスで実装。プロンプトの組み立てに必要な入力ファイル等を読み込み、辞書形式で返します。 |
+| `_format_prompt()` | (抽象メソッド) 具象クラスで実装。`_read_inputs`で得られたデータとプロンプトテンプレートを組み合わせ、最終的なプロンプト文字列を生成します。 |
+| `communicator.run()` | `GeminiCommunicator`のメソッド。生成されたプロンプトをGemini APIに送信し、結果を待ち受けます。 |
+| `write_file()` | `BaseStep`のメソッド。APIから得られた結果を指定されたパスに書き込みます。 |
+
+なお、`Plotter`, `Writer`, `Editor`, `Illustrator`のように複数の入力を個別に処理するステップは、`run`メソッドの代わりに`_run_multiple_outputs`メソッドが呼び出され、上記のフローが内部でループ実行されます。
 
 ## ワークフローの全体像
 
@@ -99,11 +125,11 @@ graph TD
 | **Recorder** | `Recorder` | 手書きのメモ(`memo.md`)を整形し、デジタル化された`note.md`を生成します。 |
 | **Researcher** | `Researcher` | `note.md`と調査ファイル(`research.md`)を基に、物語の背景設定(`setting.md`)を作成します。 |
 | **Planner** | `Planner` | `note.md`と`setting.md`から、物語全体の構成案(`plan.md`)を生成します。 |
-| **Plotter** | `Plotter` | `plan.md`を基に、より詳細なプロット(`plot.md`)を作成します。 |
-| **Writer** | `Writer` | `plot.md`に従って、小説の本文(`novel.md`)を執筆します。 |
-| **Editor** | `Editor` | `novel.md`を校正・推敲し、修正版(`novel_re.md`)を作成します。 |
-| **FinalWriter** | `FinalWriter` | 推敲済みの原稿を最終的な完成稿(`novel_f.md`)に仕上げます。 |
-| **Illustrator** | `Illustrator` | 物語の内容に基づき、挿絵のアイデア(`illust.md`)を生成します。 |
+| **Plotter** | `Plotter` | `plan.md`を基に、より詳細なプロットを作成します。<br>※内部的にプランを分割し、プロットを複数ファイルとして生成します。 |
+| **Writer** | `Writer` | `plot.md`に従って、小説の本文を執筆します。<br>※分割されたプロットファイル群を基に、それぞれ対応する本文を執筆します。 |
+| **Editor** | `Editor` | `novel.md`を校正・推敲し、修正版を作成します。<br>※生成された本文ファイル群をそれぞれ校正・推敲します。 |
+| **FinalWriter** | `FinalWriter` | 推敲済みの原稿を最終的な完成稿に仕上げます。<br>※分割された推敲済みファイル群を結合し、一つのファイルとして出力します。 |
+| **Illustrator** | `Illustrator` | 物語の内容に基づき、挿絵のアイデアを生成します。<br>※推敲済みの本文ファイル群を基に、それぞれ対応する挿絵案を生成します。 |
 
 ## 使い方
 
@@ -121,6 +147,4 @@ python apps/main.py --step all
 
 4.  **確認**: 各ステップの名称で作成されたフォルダ内に、成果物が出力されます。
 
-## まとめ
 
-`novel_workflow`は、AIの力を借りて創造的な執筆活動を加速させるための実験的なツールです。今後、各ステップのプロンプトをさらに洗練させ、より自律的で高品質な物語生成を目指していきます。
