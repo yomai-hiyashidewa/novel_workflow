@@ -3,10 +3,11 @@ import os
 from typing import List
 
 from apps.adapters.yaml_adapter import YamlAdapter
-from apps.core.steps.base_step import BaseStep
+from apps.core.steps.multiple_step import MultipleStep
 from apps.domains.workflow_step import WorkflowStep
+from apps.adapters.markdown_adapter import MarkdownAdapter  
 
-class Plotter(BaseStep):
+class Plotter(MultipleStep):
     def __init__(self, input_plan_path: str, canon_path: str, output_plot_path: str):
         super().__init__(WorkflowStep.PLOTTER)
         self.input_plan_path = input_plan_path
@@ -15,14 +16,11 @@ class Plotter(BaseStep):
         self._plans : List[str] = []
 
     def _read_inputs(self) -> dict[str, str] | None:
-        plan = self._read_file(self.input_plan_path)
-        
+        plan = MarkdownAdapter.read_file(self.input_plan_path)
+
         canon = self._read_canon_directory(self.canon_path)
 
         return {"plan": plan, "canon": canon}
-
-    def _format_prompt(self, inputs: dict[str, str]) -> str:
-        pass
 
     def _get_output_path(self) -> str:
         return self.output_plot_path

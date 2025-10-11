@@ -2,10 +2,11 @@
 import os
 
 from apps.adapters.yaml_adapter import YamlAdapter
-from apps.core.steps.base_step import BaseStep
+from apps.core.steps.single_step import SingleStep
 from apps.domains.workflow_step import WorkflowStep
+from apps.adapters.markdown_adapter import MarkdownAdapter  
 
-class Planner(BaseStep):
+class Planner(SingleStep):
     def __init__(self, input_note_path: str, input_setting_path: str, canon_path: str, output_plan_path: str):
         super().__init__(WorkflowStep.PLANNER)
         self.input_note_path = input_note_path
@@ -14,8 +15,8 @@ class Planner(BaseStep):
         self.output_plan_path = output_plan_path
 
     def _read_inputs(self) -> dict[str, str] | None:
-        note = self._read_file(self.input_note_path)
-        setting = self._read_file(self.input_setting_path)
+        note = MarkdownAdapter.read_file(self.input_note_path)
+        setting = MarkdownAdapter.read_file(self.input_setting_path)
         canon = self._read_canon_directory(self.canon_path)
 
         return {"note": note, "setting": setting, "canon": canon}
@@ -33,16 +34,3 @@ class Planner(BaseStep):
 
     def _get_output_path(self) -> str:
         return self.output_plan_path
-    
-    def _get_items_for_processing(self, inputs: dict[str, str]) -> list:
-        """Returns a list of items (e.g., split plans, plot file contents) to process."""
-        pass
-
-    def _get_item_content(self, item, inputs: dict[str, str]) -> str:
-        """Extracts/reads the content string from an item (which might be a string, a file path, etc.)."""
-        pass
-
-    def _format_prompt_for_item(self, inputs: dict[str, str], item_content: str, index: int, total: int) -> str:
-        """Formats the prompt for a specific item."""
-        pass
-
