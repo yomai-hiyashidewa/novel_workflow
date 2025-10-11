@@ -165,7 +165,7 @@ class BaseStep(ABC):
         pass
 
 
-    def _run_multiple_outputs(self):
+    def run_multiple_outputs(self):
         """The refactored common logic for steps that produce multiple outputs."""
         if not self.is_enable:
             print(f"INFO: Step '{self.step.name}' is disabled or not initialized.")

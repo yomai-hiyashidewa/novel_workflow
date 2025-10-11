@@ -62,7 +62,7 @@ class Director:
         output_plot_path = os.path.join(self._target_name, WorkflowStep.PLOTTER.value, output_plot)
         plotter = Plotter(input_plan_path=input_plan_path, canon_path=canon_path, output_plot_path=output_plot_path)
         plotter.initialize()
-        plotter._run_multiple_outputs()
+        plotter.run_multiple_outputs()
 
     def _run_writer(self):
         canon_path = YamlAdapter.get("canon_path", None)
@@ -72,7 +72,7 @@ class Director:
         output_novel_path = os.path.join(self._target_name, WorkflowStep.WRITER.value, output_novel)
         writer = Writer(input_plot_path=input_plot_path, canon_path=canon_path, output_novel_path=output_novel_path)
         writer.initialize()
-        writer._run_multiple_outputs()
+        writer.run_multiple_outputs()
 
     def _run_editor(self):
         canon_path = YamlAdapter.get("canon_path", None)
@@ -82,7 +82,7 @@ class Director:
         output_novel_path = os.path.join(self._target_name, WorkflowStep.EDITOR.value, output_novel)
         editor = Editor(input_novel_path=input_novel_path, canon_path=canon_path, output_novel_path=output_novel_path)
         editor.initialize()
-        editor._run_multiple_outputs()
+        editor.run_multiple_outputs()
 
     def _run_f_writer(self):
         canon_path = YamlAdapter.get("canon_path", None)
