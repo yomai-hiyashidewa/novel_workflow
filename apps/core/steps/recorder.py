@@ -12,7 +12,7 @@ class Recorder(BaseStep):
         self.output_note_path = output_note_path
 
     def _read_inputs(self) -> dict[str, str] | None:
-        memo = self._read_file(self.input_memo_path, "memo")
+        memo = self._read_file(self.input_memo_path)
         return {"memo": memo} if memo is not None else None
         
     def _format_prompt(self, inputs: dict[str, str]) -> str:

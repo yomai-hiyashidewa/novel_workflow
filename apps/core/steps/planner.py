@@ -14,8 +14,8 @@ class Planner(BaseStep):
         self.output_plan_path = output_plan_path
 
     def _read_inputs(self) -> dict[str, str] | None:
-        note = self._read_file(self.input_note_path, "note")
-        setting = self._read_file(self.input_setting_path, "setting")
+        note = self._read_file(self.input_note_path)
+        setting = self._read_file(self.input_setting_path)
         canon = self._read_canon_directory(self.canon_path)
 
         return {"note": note, "setting": setting, "canon": canon}

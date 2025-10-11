@@ -15,7 +15,7 @@ class Plotter(BaseStep):
         self._plans : List[str] = []
 
     def _read_inputs(self) -> dict[str, str] | None:
-        plan = self._read_file(self.input_plan_path, "plan")
+        plan = self._read_file(self.input_plan_path)
         
         canon = self._read_canon_directory(self.canon_path)
 

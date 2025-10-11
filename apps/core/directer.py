@@ -15,7 +15,6 @@ class Director:
     def __init__(self):
         self._target_name = YamlAdapter.get("target_dir", ".")
         
-        
     def _run_recorder(self):
         recorder_data = YamlAdapter.get_step(WorkflowStep.RECORDER.value, {})
         input_memo = recorder_data.get("input")
@@ -70,7 +69,7 @@ class Director:
         output_novel_path = os.path.join(self._target_name, WorkflowStep.WRITER.value, output_novel)
         writer = Writer(input_plot_path=input_plot_path, canon_path=canon_path, output_novel_path=output_novel_path)
         writer.initialize()
-        writer.run_manuscripts()
+        writer._run_multiple_outputs()
 
     def _run_tester(self):
         tester = Tester()

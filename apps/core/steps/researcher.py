@@ -11,10 +11,10 @@ class Researcher(BaseStep):
         self.output_setting_path = output_setting_path
 
     def _read_inputs(self) -> dict[str, str] | None:
-        note = self._read_file(self.input_note_path, "note")
+        note = self._read_file(self.input_note_path)
         if note is None: return None
         
-        research = self._read_file(self.input_research_path, "research")
+        research = self._read_file(self.input_research_path)
         if research is None: return None
         
         return {"note": note, "research": research}
