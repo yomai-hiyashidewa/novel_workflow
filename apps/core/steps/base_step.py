@@ -100,6 +100,10 @@ class BaseStep(ABC):
     def _get_output_path(self) -> str:
         pass
 
+    def _rename_output_path(self, filename: str, index: int) -> str:
+        base, ext = os.path.splitext(filename)
+        return f"{base}_{index + 1}{ext}"
+
     def run(self):
         if not self.is_enable:
             print(f"INFO: Step '{self.step.name}' is disabled or not initialized.")
@@ -127,3 +131,4 @@ class BaseStep(ABC):
         output_path = self._get_output_path()
         self.write_file(output_path, result)
         print(f"INFO: {self.step.name.capitalize()}: Result has been written to", output_path)
+

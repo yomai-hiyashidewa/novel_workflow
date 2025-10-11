@@ -7,6 +7,7 @@ from apps.domains.workflow_step import WorkflowStep
 from apps.core.steps.recorder import Recorder
 from apps.core.steps.researcher import Researcher
 from apps.core.steps.planner import Planner
+from apps.core.steps.plotter import Plotter
 from apps.core.steps.tester import Tester
 
 class Director:
@@ -49,6 +50,17 @@ class Director:
         planner.initialize()
         planner.run()
 
+    def _run_plotter(self):
+        canon_path = YamlAdapter.get("canon_path", None)
+        plotter_data = YamlAdapter.get_step(WorkflowStep.PLOTTER.value, {})
+        input_plan = plotter_data.get("input")
+        output_plot = plotter_data.get("output")
+        input_plan_path = os.path.join(self._target_name, WorkflowStep.PLANNER.value, input_plan)
+        output_plot_path = os.path.join(self._target_name, WorkflowStep.PLOTTER.value, output_plot)
+        plotter = Plotter(input_plan_path=input_plan_path, canon_path=canon_path, output_plot_path=output_plot_path)
+        plotter.initialize()
+        plotter.run_plots()
+
     def _run_tester(self):
         tester = Tester()
         tester.initialize()
@@ -65,7 +77,7 @@ class Director:
             elif step == WorkflowStep.PLANNER:
                 self._run_planner()
             elif step == WorkflowStep.PLOTTER:
-                print("Plotter step is not implemented yet.")
+                self._run_plotter()
             elif step == WorkflowStep.WRITER:
                 print("Writer step is not implemented yet.")
             elif step == WorkflowStep.ILLUSTRATOR:
