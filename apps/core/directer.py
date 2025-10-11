@@ -9,6 +9,9 @@ from apps.core.steps.researcher import Researcher
 from apps.core.steps.planner import Planner
 from apps.core.steps.plotter import Plotter
 from apps.core.steps.writer import Writer
+from apps.core.steps.editor import Editor
+from apps.core.steps.final_writer import FinalWriter
+from apps.core.steps.illustrator import Illustrator
 from apps.core.steps.tester import Tester
 
 class Director:
@@ -71,6 +74,49 @@ class Director:
         writer.initialize()
         writer._run_multiple_outputs()
 
+    def _run_editor(self):
+        canon_path = YamlAdapter.get("canon_path", None)
+        editor_data = YamlAdapter.get_step(WorkflowStep.EDITOR.value, {})
+        output_novel = editor_data.get("output")
+        input_novel_path = os.path.join(self._target_name, WorkflowStep.WRITER.value)
+        output_novel_path = os.path.join(self._target_name, WorkflowStep.EDITOR.value, output_novel)
+        editor = Editor(input_novel_path=input_novel_path, canon_path=canon_path, output_novel_path=output_novel_path)
+        editor.initialize()
+        editor._run_multiple_outputs()
+
+    def _run_f_writer(self):
+        canon_path = YamlAdapter.get("canon_path", None)
+        f_writer_data = YamlAdapter.get_step(WorkflowStep.F_WRITER.value, {})
+        output_novel = f_writer_data.get("output")
+        input_novel_path = os.path.join(self._target_name, WorkflowStep.EDITOR.value)
+        output_novel_path = os.path.join(self._target_name, WorkflowStep.F_WRITER.value, output_novel)
+        writer = FinalWriter(input_novel_path=input_novel_path, canon_path=canon_path, output_novel_path=output_novel_path)
+        writer.initialize()
+        writer.run()
+        
+
+    def _run_illustrator(self):
+        canon_path = YamlAdapter.get("canon_path", None)
+        illustrator_data = YamlAdapter.get_step(WorkflowStep.ILLUSTRATOR.value, {})
+        output_illustration = illustrator_data.get("output")
+        input_novel_path = os.path.join(self._target_name, WorkflowStep.EDITOR.value)
+        output_illustration_path = os.path.join(self._target_name, WorkflowStep.ILLUSTRATOR.value, output_illustration)
+        illustrator = Illustrator(input_novel_path=input_novel_path, canon_path=canon_path, output_illustration_path=output_illustration_path)
+        illustrator.initialize()
+        illustrator.run()
+
+    def _run_all(self):
+        self._run_recorder()
+        self._run_researcher()
+        self._run_planner()
+        self._run_plotter()
+        self._run_writer()
+        self._run_editor()
+        self._run_f_writer()
+        self._run_illustrator()
+
+
+
     def _run_tester(self):
         tester = Tester()
         tester.initialize()
@@ -90,10 +136,14 @@ class Director:
                 self._run_plotter()
             elif step == WorkflowStep.WRITER:
                 self._run_writer()
+            elif step == WorkflowStep.EDITOR:
+                self._run_editor()
             elif step == WorkflowStep.ILLUSTRATOR:
-                print("Illustrator step is not implemented yet.")
+                self._run_illustrator()
+            elif step == WorkflowStep.F_WRITER:
+                self._run_f_writer()
             else:
-                print("All steps will be executed in order.")
+                self._run_all()
         except Exception as e:
             print(f"Error occurred while running {step.value}: {e}")
 

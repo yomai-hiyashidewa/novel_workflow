@@ -1,38 +1,38 @@
 
 import os
+from typing import List
 
 from apps.adapters.yaml_adapter import YamlAdapter
 from apps.core.steps.base_step import BaseStep
 from apps.domains.workflow_step import WorkflowStep
 
-class Planner(BaseStep):
-    def __init__(self, input_note_path: str, input_setting_path: str, canon_path: str, output_plan_path: str):
-        super().__init__(WorkflowStep.PLANNER)
-        self.input_note_path = input_note_path
-        self.input_setting_path = input_setting_path
+class FinalWriter(BaseStep):
+    def __init__(self, input_novel_path: str, canon_path: str, output_novel_path: str):
+        super().__init__(WorkflowStep.F_WRITER)
+        self.input_novel_path = input_novel_path
         self.canon_path = canon_path
-        self.output_plan_path = output_plan_path
+        self.output_novel_path = output_novel_path
 
     def _read_inputs(self) -> dict[str, str] | None:
-        note = self._read_file(self.input_note_path)
-        setting = self._read_file(self.input_setting_path)
+        novels : str = ""
+        for file in self._list_markdown_files(self.input_novel_path):
+            file_path = os.path.join(self.input_novel_path, file)
+            content = self._read_file(file_path)
+            if content:
+                novels += f"# {file}\n{content}\n"
+        
         canon = self._read_canon_directory(self.canon_path)
 
-        return {"note": note, "setting": setting, "canon": canon}
+        return {"canon": canon, "novels": novels}
 
     def _format_prompt(self, inputs: dict[str, str]) -> str:
-         return (
+        return (
             f"{self.prompt}\n"
-            f"# note.md\n"
-            f"{inputs['note']}\n"
-            f"# setting.md\n"
-            f"{inputs['setting']}\n"
             f"# canon\n"
-            f"{inputs['canon']}"
+            f"{inputs['canon']}\n"
+            f"# novels\n"
+            f"{inputs['novels']}"
         )
-
-    def _get_output_path(self) -> str:
-        return self.output_plan_path
     
     def _get_items_for_processing(self, inputs: dict[str, str]) -> list:
         """Returns a list of items (e.g., split plans, plot file contents) to process."""
@@ -46,3 +46,6 @@ class Planner(BaseStep):
         """Formats the prompt for a specific item."""
         pass
 
+    def _get_output_path(self) -> str:
+        return self.output_novel_path
+    

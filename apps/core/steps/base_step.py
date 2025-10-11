@@ -59,8 +59,8 @@ class BaseStep(ABC):
                 markdown_files.append(entry)
 
         return markdown_files
-        
-    def _read_canon_directory(self, folder_path: str) -> str | None:
+
+    def _read_canon_directory(self, folder_path: str , with_thumbnail :bool = False) -> str | None:
 
         if not os.path.isdir(folder_path):
             print(f"info: Directory '{folder_path}' does not exist or is not a directory.")
@@ -71,6 +71,9 @@ class BaseStep(ABC):
         for root, _, files in os.walk(folder_path):
             for file_name in files:
                 if file_name.endswith(".md"):
+
+                    if not with_thumbnail and file_name == "thumbnail.md":
+                        continue  # Skip this file
                     file_path = os.path.join(root, file_name)
 
               
