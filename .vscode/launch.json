@@ -8,10 +8,10 @@
             "program": "${workspaceFolder}/apps/main.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/apps",
-            "justMyCode": true,
+            "justMyCode": true,  
             "args": [
                 "--step",
-                "recorder"
+                "planner"
             ]
         }
     ]

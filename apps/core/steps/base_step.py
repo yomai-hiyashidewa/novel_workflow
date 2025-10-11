@@ -38,6 +38,38 @@ class BaseStep(ABC):
         os.makedirs(target_dir, exist_ok=True)
         self._read_prompt()
 
+    def _read_file(self, path: str, file_name: str) -> str | None:
+        if not os.path.exists(path):
+            print(f"info:{file_name} '{path}' does not exist.")
+            return None
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+        
+
+    def _read_canon_directory(self, folder_path: str) -> str | None:
+
+        if not os.path.isdir(folder_path):
+            print(f"info: Directory '{folder_path}' does not exist or is not a directory.")
+            return None
+
+        all_content = []
+
+        for root, _, files in os.walk(folder_path):
+            for file_name in files:
+                if file_name.endswith(".md"):
+                    file_path = os.path.join(root, file_name)
+
+              
+                with open(file_path, "r", encoding="utf-8") as f:
+                    all_content.append(f"### {file_name}\n")
+                    all_content.append(f.read())
+                    all_content.append("\n\n")
+
+        if not all_content:
+            return None
+        return "".join(all_content).rstrip() 
+
+
     def _read_prompt(self):       
         self.prompt = PromptReader.read(self.step)
         if self.prompt is None:

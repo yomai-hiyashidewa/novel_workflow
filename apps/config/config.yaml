@@ -2,6 +2,7 @@ api_key_path: "C:/Users/user/Documents/projects/api_key.txt"
 #model_name: "gemini-2.5-pro"
 model_name: "gemini-2.5-flash"
 target_dir: "C:/Users/user/Documents/projects/SomeDocuments/Note/experiment"
+canon_path: "C:/Users/user/Documents/projects/SomeDocuments/Note/設定"
 
 steps:
   recorder:
@@ -12,7 +13,8 @@ steps:
     input_research: "research.md"
     output: "setting.md"
   planner:
-    input: "setting.md"
+    input_note: "note.md"
+    input_setting: "setting.md"
     output: "plan.md"
   plotter:
     input: "plan.md"
