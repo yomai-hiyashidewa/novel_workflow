@@ -21,11 +21,13 @@ graph LR
 
     subgraph process
         process_write((小説を執筆する))
+        process_add_title((タイトルを追加する))
     end
 
     canon --> process_write
     input --> process_write
-    process_write --> product
+    process_write　--> process_add_title
+    process_add_title --> product
 
 
 ```
@@ -47,8 +49,7 @@ graph LR
 * plot.mdを元にnovel.mdを作成する。
 * この作業は一連の執筆ワークフローの一部である。
 * 最終成果物はおおよそ2000字である。
-* plot.mdは複数に分割された計画で付属する番号が全体でのプロット番号示している。
-* 作成されたnovel.mdはそれぞれNoteに投稿される。
+* plot.mdは複数に分割されたプロットであり、付属する番号が全体でのプロット番号示している。
 * あなたの仕事はplot.mdの内容を元に小説を作成することである。
     * canonの内容を正しく守ることがクライアントから求められている。
     * **【執筆フォーマットの厳守】**
@@ -63,3 +64,6 @@ graph LR
         「会話文」
 
         地の文（モノローグや次の描写）
+
+## タイトルを追加する
+* 作成した小説にふさわしいタイトルをつけて、文の初めに追加する。
