@@ -8,6 +8,7 @@ from apps.core.steps.recorder import Recorder
 from apps.core.steps.researcher import Researcher
 from apps.core.steps.planner import Planner
 from apps.core.steps.plotter import Plotter
+from apps.core.steps.writer import Writer
 from apps.core.steps.tester import Tester
 
 class Director:
@@ -59,7 +60,17 @@ class Director:
         output_plot_path = os.path.join(self._target_name, WorkflowStep.PLOTTER.value, output_plot)
         plotter = Plotter(input_plan_path=input_plan_path, canon_path=canon_path, output_plot_path=output_plot_path)
         plotter.initialize()
-        plotter.run_plots()
+        plotter._run_multiple_outputs()
+
+    def _run_writer(self):
+        canon_path = YamlAdapter.get("canon_path", None)
+        writer_data = YamlAdapter.get_step(WorkflowStep.WRITER.value, {})
+        output_novel = writer_data.get("output")
+        input_plot_path = os.path.join(self._target_name, WorkflowStep.PLOTTER.value)
+        output_novel_path = os.path.join(self._target_name, WorkflowStep.WRITER.value, output_novel)
+        writer = Writer(input_plot_path=input_plot_path, canon_path=canon_path, output_novel_path=output_novel_path)
+        writer.initialize()
+        writer.run_manuscripts()
 
     def _run_tester(self):
         tester = Tester()
@@ -79,7 +90,7 @@ class Director:
             elif step == WorkflowStep.PLOTTER:
                 self._run_plotter()
             elif step == WorkflowStep.WRITER:
-                print("Writer step is not implemented yet.")
+                self._run_writer()
             elif step == WorkflowStep.ILLUSTRATOR:
                 print("Illustrator step is not implemented yet.")
             else:

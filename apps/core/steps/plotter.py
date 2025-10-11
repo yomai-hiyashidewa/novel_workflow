@@ -56,37 +56,19 @@ class Plotter(BaseStep):
         
         self._plans.append("\n".join(section_lines))
 
-    def _format_prompt_by_plan(self,inputs: dict[str, str] , plan: str , idx : int , full_idx : int) -> str:
+    def _get_items_for_processing(self, inputs: dict[str, str]) -> list:
+        self._split_content_into_plans(inputs['plan'])
+        return self._plans
+
+    def _get_item_content(self, item: str, inputs: dict[str, str]) -> str:
+        return item
+
+    def _format_prompt_for_item(self, inputs: dict[str, str], item_content: str, index: int, total: int) -> str:
          return (
             f"{self.prompt}\n"
-            f"plan:{idx + 1}/{full_idx}\n"
-            f"{plan}\n"
+            f"plan:{index + 1}/{total}\n"
+            f"{item_content}\n"
             f"# canon\n"
             f"{inputs['canon']}"
         )
     
-
-
-    def run_plots(self):
-        if not self.is_enable:
-            print(f"INFO: Step '{self.step.name}' is disabled or not initialized.")
-            return
-        
-        inputs = self._read_inputs()
-        if inputs is None: return None
-        self._split_content_into_plans(inputs['plan'])
-
-        for idx, plan in enumerate(self._plans):
-            prompt = self._format_prompt_by_plan(inputs, plan , idx , len(self._plans))
-            result = self.communicator.run(
-                prompt=prompt
-            )
-
-            if result is None:
-                print(f"WARNING: Communicator returned no result for step '{self.step.name}'.")
-                return
-            
-            output_path = self._get_output_path()
-            output_path = self._rename_output_path(output_path , idx)
-            self.write_file(output_path, result)
-            print(f"INFO: {self.step.name.capitalize()}: Result has been written to", output_path)

@@ -20,8 +20,6 @@ steps:
     input: "plan.md"
     output: "plot.md"
   writer:
-    input: "plot.md"
     output: "novel.md"
   illustrator:
-    input: "novel.md"
-    output: "illust.png"
+    output: "illust.md"
