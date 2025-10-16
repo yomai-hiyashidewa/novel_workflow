@@ -1,7 +1,7 @@
 ---
 title: "AI小説執筆支援ツール novel_workflow のご紹介"
 emoji: "🤖"
-type: "tech" # tech: 技術記事 / idea: アイデア
+type: "tech"
 topics: ["python", "gemini", "ai", "automation"]
 published: false
 ---
@@ -14,7 +14,26 @@ published: false
 
 ## 概要
 
-本ツールは、一連の小説執筆プロセスを複数の「ステップ」に分割し、それぞれを独立したPythonスクリプトとして実行します。各ステップでは、Googleの生成AIモデル「Gemini」と連携し、高品質なテキスト生成を行います。設定ファイル`config.yaml`を編集することで、ユーザーはワークフローの挙動を柔軟にカスタマイズできます。
+```mermaid
+graph LR
+    subgraph kanon
+        character[キャラクター]
+        story[ストーリー]
+    end
+    memo[メモ]
+    research[deepresearch結果]
+    process((執筆する))
+    novel[小説]
+    thumnail[サムネイル]
+    kanon --> process
+    memo --> process
+    research --> process
+    process --> novel
+    process --> thumnail
+
+```
+基幹となるkanon(作って欲しい小説内容)の内容をベースとしてメモとdeepresearch結果から小説を自動生成するためのツールです。
+AIに上記プロセスを実行させようとした結果、途中で介入しないとどうしようもないという結論に達したので、仕方なく中間生成物を大量に吐き出させるという構造になっています。
 
 ## 主な特徴
 
@@ -24,17 +43,45 @@ published: false
 - **プロンプトの外部管理**: 各ステップで使用するプロンプトがMarkdownファイルとして分離されており、改善や変更が容易です。
 
 ## アーキテクチャ
+### 上位アーキテクチャ
 
-本ツールは、全体の流れを制御する`Director`と、個別の処理を担当する複数の`Step`クラス、そして設定ファイルを読み込む`YamlAdapter`から構成されています。
+```mermaid
+architecture-beta
+    group gemini(cloud)[Gemini]
+    group pc(logos:aws-ec2)[Local PC]
+    service gemini_api(logos:aws-elastic-beanstalk)[API] in gemini
+    service novel_workflow(logos:aws-step-functions)[CLI] in pc
+    service database(database)[Folder] in pc
+    gemini_api :B -- T: novel_workflow
+    novel_workflow : L -- R: database
+
+    
+    
+```
+
+### 下位アーキテクチャ
+
+```mermaid
+graph LR
+    user[User]
+    directer[directer]
+    team[team]
+    user --call--> directer
+    directer --call--> team
+
+```
+
+本ツールは、全体の流れを制御する`Director`、各処理の共通機能を定義する`BaseStep`、具体的な実行ロジックを持つ`SingleStep`と`MultipleStep`、そして個別の処理を担当する具象`Step`クラス群から構成されています。
 
 - **`Director`**: `config.yaml`とコマンドライン引数に基づき、実行すべき`Step`を判断し、順次処理を呼び出します。
 - **`BaseStep` (抽象クラス)**: 全ての`Step`クラスの基底クラス。Geminiとの通信、ファイルI/O、プロンプト読み込みなどの共通機能を提供します。
-- **`Step` (具象クラス)**: `Planner`, `Writer`など、ワークフローの各工程を担当する具体的な実装です。
+- **`SingleStep` / `MultipleStep` (抽象クラス)**: `BaseStep`を継承し、それぞれ単一出力、複数出力のステップの実行ロジックを実装します。
+- **`Step` (具象クラス)**: `Planner`, `Writer`など、ワークフローの各工程を担当する具体的な実装。`SingleStep`または`MultipleStep`を継承します。
 - **`GeminiCommunicator`**: Gemini APIとの通信をカプセル化し、プロンプトを送信して結果を受け取ります。
 
 ### クラス構成図
 
-`BaseStep`は抽象基底クラスとして定義されており、各具象ステップクラス（`Recorder`、`Planner`など）はこれを継承して実装されています。
+`BaseStep`を頂点とし、`SingleStep`と`MultipleStep`が派生します。各具象ステップクラスは、その特性に応じていずれかを継承します。
 
 ```mermaid
 classDiagram
@@ -43,24 +90,41 @@ classDiagram
         +communicator: GeminiCommunicator
         +initialize()
         +run()
-        -_read_prompt()
-        -_read_file(path)
-        -write_file(path, content)
     }
 
-    BaseStep <|-- Recorder
-    BaseStep <|-- Researcher
-    BaseStep <|-- Planner
-    BaseStep <|-- Plotter
-    BaseStep <|-- Writer
-    BaseStep <|-- Editor
-    BaseStep <|-- FinalWriter
-    BaseStep <|-- Illustrator
+    class SingleStep {
+        <<Abstract>>
+        #_format_prompt()
+        +run()
+    }
+    
+    class MultipleStep {
+        <<Abstract>>
+        #_get_items_for_processing()
+        #_get_item_content()
+        #_format_prompt_for_item()
+        +run()
+    }
+
+    BaseStep <|-- SingleStep
+    BaseStep <|-- MultipleStep
+
+    SingleStep <|-- Recorder
+    SingleStep <|-- Researcher
+    SingleStep <|-- Planner
+    SingleStep <|-- FinalWriter
+
+    MultipleStep <|-- Plotter
+    MultipleStep <|-- Writer
+    MultipleStep <|-- Editor
+    MultipleStep <|-- Illustrator
 ```
 
 ### 基本動作フロー
 
-各ステップの基本的な実行ロジックは`BaseStep`の`run`メソッドに定義されています。単一の出力を生成するステップ（例: `Recorder`, `FinalWriter`）は、以下のフローで動作します。
+#### SingleStepの動作フロー
+
+単一の出力を生成するステップ（例: `Recorder`, `Planner`）の動作フローです。
 
 ```mermaid
 graph TD
@@ -75,14 +139,27 @@ graph TD
     F --> Z;
 ```
 
-| メソッド | 役割 |
-|:---|:---|
-| `_read_inputs()` | (抽象メソッド) 具象クラスで実装。プロンプトの組み立てに必要な入力ファイル等を読み込み、辞書形式で返します。 |
-| `_format_prompt()` | (抽象メソッド) 具象クラスで実装。`_read_inputs`で得られたデータとプロンプトテンプレートを組み合わせ、最終的なプロンプト文字列を生成します。 |
-| `communicator.run()` | `GeminiCommunicator`のメソッド。生成されたプロンプトをGemini APIに送信し、結果を待ち受けます。 |
-| `write_file()` | `BaseStep`のメソッド。APIから得られた結果を指定されたパスに書き込みます。 |
+#### MultipleStepの動作フロー
 
-なお、`Plotter`, `Writer`, `Editor`, `Illustrator`のように複数の入力を個別に処理するステップは、`run`メソッドの代わりに`_run_multiple_outputs`メソッドが呼び出され、上記のフローが内部でループ実行されます。
+複数の入力から複数の出力を生成するステップ（例: `Plotter`, `Writer`）の動作フローです。内部でループ処理が実行されます。
+
+```mermaid
+graph TD
+    A[Start run] --> B{is_enable?};
+    B -- No --> Z[End];
+    B -- Yes --> C[1. _read_inputs];
+    C -- No inputs --> Z;
+    C -- Inputs found --> D[2. _get_items_for_processing];
+    D --> E{For each item};
+    E -- Loop --> F[3. _get_item_content];
+    F --> G[4. _format_prompt_for_item];
+    G --> H[5. communicator.run<br>Gemini API 実行];
+    H -- No result --> I[Continue loop];
+    H -- Result received --> J[6. write_file];
+    J --> I;
+    I -- End of loop --> Z;
+    E -- No items --> Z;
+```
 
 ## ワークフローの全体像
 
@@ -101,18 +178,18 @@ graph TD
         C & F --> G(Planner);
         G --> H[plan.md];
         H --> I(Plotter);
-        I --> J[plot.md];
+        I --> J[plot/];
         J --> K(Writer);
-        K --> L[novel.md];
+        K --> L[novel/];
     end
 
     subgraph "推敲・仕上げ"
         L --> M(Editor);
-        M --> N[novel_re.md];
+        M --> N[novel_re/];
         N --> O(FinalWriter);
         O --> P[novel_f.md];
-        M --> Q(Illustrator);
-        Q --> R[illust.md];
+        N --> Q(Illustrator);
+        Q --> R[illust/];
     end
 
     P & R --> S((成果物));
@@ -120,16 +197,16 @@ graph TD
 
 ### 各ステップの役割
 
-| ステップ | クラス | 役割 |
-|:---|:---|:---|
-| **Recorder** | `Recorder` | 手書きのメモ(`memo.md`)を整形し、デジタル化された`note.md`を生成します。 |
-| **Researcher** | `Researcher` | `note.md`と調査ファイル(`research.md`)を基に、物語の背景設定(`setting.md`)を作成します。 |
-| **Planner** | `Planner` | `note.md`と`setting.md`から、物語全体の構成案(`plan.md`)を生成します。 |
-| **Plotter** | `Plotter` | `plan.md`を基に、より詳細なプロットを作成します。<br>※内部的にプランを分割し、プロットを複数ファイルとして生成します。 |
-| **Writer** | `Writer` | `plot.md`に従って、小説の本文を執筆します。<br>※分割されたプロットファイル群を基に、それぞれ対応する本文を執筆します。 |
-| **Editor** | `Editor` | `novel.md`を校正・推敲し、修正版を作成します。<br>※生成された本文ファイル群をそれぞれ校正・推敲します。 |
-| **FinalWriter** | `FinalWriter` | 推敲済みの原稿を最終的な完成稿に仕上げます。<br>※分割された推敲済みファイル群を結合し、一つのファイルとして出力します。 |
-| **Illustrator** | `Illustrator` | 物語の内容に基づき、挿絵のアイデアを生成します。<br>※推敲済みの本文ファイル群を基に、それぞれ対応する挿絵案を生成します。 |
+| ステップ | クラス | 継承元 | 役割 |
+|:---|:---|:---|:---|
+| **Recorder** | `Recorder` | `SingleStep` | 手書きのメモ(`memo.md`)を整形し、デジタル化された`note.md`を生成します。 |
+| **Researcher** | `Researcher` | `SingleStep` | `note.md`と調査ファイル(`research.md`)を基に、物語の背景設定(`setting.md`)を作成します。 |
+| **Planner** | `Planner` | `SingleStep` | `note.md`と`setting.md`から、物語全体の構成案(`plan.md`)を生成します。 |
+| **Plotter** | `Plotter` | `MultipleStep` | `plan.md`を基に、より詳細なプロットを複数ファイルとして生成します。 |
+| **Writer** | `Writer` | `MultipleStep` | 分割されたプロットファイル群を基に、それぞれ対応する本文を執筆します。 |
+| **Editor** | `Editor` | `MultipleStep` | 生成された本文ファイル群をそれぞれ校正・推敲します。 |
+| **FinalWriter** | `FinalWriter` | `SingleStep` | 分割された推敲済みファイル群を結合し、一つの完成稿として出力します。 |
+| **Illustrator** | `Illustrator` | `MultipleStep` | 推敲済みの本文ファイル群を基に、それぞれ対応する挿絵案を生成します。 |
 
 ## 使い方
 
@@ -146,5 +223,3 @@ python apps/main.py --step all
 ```
 
 4.  **確認**: 各ステップの名称で作成されたフォルダ内に、成果物が出力されます。
-
-

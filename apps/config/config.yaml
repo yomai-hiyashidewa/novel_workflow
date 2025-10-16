@@ -1,7 +1,7 @@
 api_key_path: "C:/Users/user/Documents/projects/api_key.txt"
-#model_name: "gemini-2.5-pro"
-model_name: "gemini-2.5-flash"
-target_dir: "C:/Users/user/Documents/projects/SomeDocuments/Note/20251005"
+model_name: "gemini-2.5-pro"
+#model_name: "gemini-2.5-flash"
+target_dir: "C:/Users/user/Documents/projects/SomeDocuments/Note/20251012"
 canon_path: "C:/Users/user/Documents/projects/SomeDocuments/Note/設定"
 
 steps:
@@ -14,6 +14,7 @@ steps:
     output: "setting.md"
   planner:
     input_note: "note.md"
+    input_pictures: "pictures.md"
     input_setting: "setting.md"
     output: "plan.md"
   plotter:
