@@ -8,19 +8,21 @@ from apps.domains.workflow_step import WorkflowStep
 from apps.adapters.markdown_adapter import MarkdownAdapter  
 
 class Plotter(MultipleStep):
-    def __init__(self, input_plan_path: str, canon_path: str, output_plot_path: str):
+    def __init__(self, input_plan_path: str, input_note_path: str, canon_path: str, output_plot_path: str):
         super().__init__(WorkflowStep.PLOTTER)
         self.input_plan_path = input_plan_path
+        self.input_note_path = input_note_path
         self.canon_path = canon_path
         self.output_plot_path = output_plot_path
         self._plans : List[str] = []
 
     def _read_inputs(self) -> dict[str, str] | None:
         plan = MarkdownAdapter.read_file(self.input_plan_path)
+        note = MarkdownAdapter.read_file(self.input_note_path)
 
         canon = self._read_canon_directory(self.canon_path)
 
-        return {"plan": plan, "canon": canon}
+        return {"plan": plan, "note": note, "canon": canon}
 
     def _get_output_path(self) -> str:
         return self.output_plot_path
@@ -66,6 +68,8 @@ class Plotter(MultipleStep):
             f"{self.prompt}\n"
             f"plan:{index + 1}/{total}\n"
             f"{item_content}\n"
+            f"# note\n"
+            f"{inputs['note']}\n"
             f"# canon\n"
             f"{inputs['canon']}"
         )
