@@ -17,16 +17,17 @@ This tool divides the entire novel writing process into multiple "steps," each e
 
 ## Architecture
 
-This tool consists of a `Director` that controls the overall flow, multiple `Step` classes that handle individual processes, and a `YamlAdapter` that reads the configuration file.
+This tool consists of a `Director` class (in `directer.py`) that controls the overall flow, multiple `Step` classes that handle individual processes, and a `YamlAdapter` that reads the configuration file.
 
 - **`Director`**: Determines which `Step` to execute based on `config.yaml` and command-line arguments, and calls the processes sequentially.
 - **`BaseStep` (Abstract Class)**: The base class for all `Step` classes. It provides common functionalities such as communication with Gemini, file I/O, and prompt loading.
+- **`SingleStep` and `MultipleStep` (Abstract Classes)**: Inherit from `BaseStep` and provide skeletons for steps that produce single or multiple output files.
 - **`Step` (Concrete Classes)**: Specific implementations responsible for each stage of the workflow, such as `Planner` and `Writer`.
 - **`GeminiCommunicator`**: Encapsulates communication with the Gemini API, sending prompts and receiving results.
 
 ### Class Diagram
 
-`BaseStep` is defined as an abstract base class, and each concrete step class (e.g., `Recorder`, `Planner`) inherits from it.
+`BaseStep` is defined as an abstract base class, and each concrete step class inherits from `SingleStep` or `MultipleStep`.
 
 ```mermaid
 classDiagram
@@ -40,14 +41,26 @@ classDiagram
         #write_file(path, content)
     }
 
-    BaseStep <|-- Recorder
-    BaseStep <|-- Researcher
-    BaseStep <|-- Planner
-    BaseStep <|-- Plotter
-    BaseStep <|-- Writer
-    BaseStep <|-- Editor
-    BaseStep <|-- FinalWriter
-    BaseStep <|-- Illustrator
+    class SingleStep {
+        <<Abstract>>
+    }
+
+    class MultipleStep {
+        <<Abstract>>
+    }
+
+    BaseStep <|-- SingleStep
+    BaseStep <|-- MultipleStep
+
+    SingleStep <|-- Recorder
+    SingleStep <|-- Researcher
+    SingleStep <|-- Planner
+    MultipleStep <|-- Plotter
+    MultipleStep <|-- Writer
+    MultipleStep <|-- Editor
+    SingleStep <|-- FinalWriter
+    SingleStep <|-- Illustrator
+    SingleStep <|-- Tester
 ```
 
 ## Workflow Overview
@@ -59,43 +72,45 @@ graph TD
     subgraph "Preparation"
         A[memo.md] --> B(Recorder);
         B --> C[note.md];
-        D[research.md] & C --> E(Researcher);
-        E --> F[setting.md];
+        E[pictures.md];
+        D[research.md] & C --> F(Researcher);
+        F --> G[setting.md];
     end
 
     subgraph "Writing"
-        C & F --> G(Planner);
-        G --> H[plan.md];
-        H --> I(Plotter);
-        I --> J[plot.md];
-        J --> K(Writer);
-        K --> L[novel.md];
+        C & E & G --> H(Planner);
+        H --> I[plan.md];
+        I --> J(Plotter);
+        J --> K[plot.md];
+        K --> L(Writer);
+        L --> M[novel.md];
     end
 
     subgraph "Revision & Finishing"
-        L --> M(Editor);
-        M --> N[novel_re.md];
-        N --> O(FinalWriter);
-        O --> P[novel_f.md];
-        M --> Q(Illustrator);
-        Q --> R[illust.md];
+        M --> N(Editor);
+        N --> O[novel_re.md];
+        O --> P(FinalWriter);
+        P --> Q[novel_f.md];
+        O --> R(Illustrator);
+        R --> S[illust.md];
     end
 
-    P & R --> S((Artifacts));
+    Q & S --> T((Artifacts));
 ```
 
 ### Role of Each Step
 
-| Step | Class | Role |
-|:---|:---|:---|
-| **Recorder** | `Recorder` | Formats handwritten notes (`memo.md`) and generates a digitized `note.md`. |
-| **Researcher** | `Researcher` | Creates the story's background settings (`setting.md`) based on `note.md` and a research file (`research.md`). |
-| **Planner** | `Planner` | Generates an overall story structure (`plan.md`) from `note.md` and `setting.md`. |
-| **Plotter** | `Plotter` | Creates a more detailed plot (`plot.md`) based on `plan.md`. |
-| **Writer** | `Writer` | Writes the main text of the novel (`novel.md`) according to `plot.md`. |
-| **Editor** | `Editor` | Proofreads and revises `novel.md`, creating a revised version (`novel_re.md`). |
-| **FinalWriter** | `FinalWriter` | Finishes the revised manuscript into a final draft (`novel_f.md`). |
-| **Illustrator** | `Illustrator` | Generates ideas for illustrations (`illust.md`) based on the story's content. |
+| Step | Class | Inherits from | Role |
+|:---|:---|:---|:---|
+| **Recorder** | `Recorder` | `SingleStep` | Formats handwritten notes (`memo.md`) and generates a digitized `note.md`. |
+| **Researcher** | `Researcher` | `SingleStep` | Creates the story's background settings (`setting.md`) based on `note.md` and a research file (`research.md`). |
+| **Planner** | `Planner` | `SingleStep` | Generates an overall story structure (`plan.md`) from `note.md`, `pictures`, and `setting.md`. |
+| **Plotter** | `Plotter` | `MultipleStep` | Creates a more detailed plot (`plot.md`) based on `plan.md`. |
+| **Writer** | `Writer` | `MultipleStep` | Writes the main text of the novel (`novel.md`) according to `plot.md`. |
+| **Editor** | `Editor` | `MultipleStep` | Proofreads and revises `novel.md`, creating a revised version (`novel_re.md`). |
+| **FinalWriter** | `FinalWriter` | `SingleStep` | Finishes the revised manuscript into a final draft (`novel_f.md`). |
+| **Illustrator** | `Illustrator` | `SingleStep` | Generates ideas for illustrations (`illust.md`) based on the story's content. |
+| **Tester** | `Tester` | `SingleStep` | A step for testing and debugging purposes. Not part of the main workflow. |
 
 ## How to Use
 
