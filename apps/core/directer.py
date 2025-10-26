@@ -59,12 +59,10 @@ class Director:
         canon_path = YamlAdapter.get("canon_path", None)
         plotter_data = YamlAdapter.get_step(WorkflowStep.PLOTTER.value, {})
         input_plan = plotter_data.get("input_plan")
-        input_note = plotter_data.get("input_note")
         output_plot = plotter_data.get("output")
         input_plan_path = os.path.join(self._target_name, WorkflowStep.PLANNER.value, input_plan)
-        input_note_path = os.path.join(self._target_name, WorkflowStep.RECORDER.value, input_note)
         output_plot_path = os.path.join(self._target_name, WorkflowStep.PLOTTER.value, output_plot)
-        plotter = Plotter(input_plan_path=input_plan_path, input_note_path=input_note_path, canon_path=canon_path, output_plot_path=output_plot_path)
+        plotter = Plotter(input_plan_path=input_plan_path, canon_path=canon_path, output_plot_path=output_plot_path)
         plotter.initialize()
         plotter.run()
 
